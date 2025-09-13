@@ -1,0 +1,85 @@
+# --------------------------------------
+# Generic
+# --------------------------------------
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+*.orig
+*.tmp
+*.bak
+
+# Editors / IDE
+.atom/
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/
+.history/
+
+# Build / Cache
+.build/
+.buildlog/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+
+# Misc
+.migrate_working_dir/
+.svn/
+
+# Documentation
+**/doc/api/
+
+# --------------------------------------
+# Flutter / Android
+# --------------------------------------
+/android/.gradle
+/android/local.properties
+/android/captures/
+/android/.idea/
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Firebase Android
+/android/app/google-services.json
+
+# Generated plugin files
+**/GeneratedPluginRegistrant.*
+**/flutter_export_environment.sh
+
+# Symbol / mapping files
+app.*.symbols
+app.*.map.json
+
+# NDK / CMake
+.cxx/
+.externalNativeBuild/
+
+# --------------------------------------
+# iOS / macOS
+# --------------------------------------
+ios/Flutter/.last_build_id
+ios/Flutter/Flutter.podspec
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Flutter/Flutter.framework
+ios/Flutter/App.framework
+
+# Firebase iOS
+ios/GoogleService-Info.plist
+
+# macOS
+macos/Flutter/Flutter.podspec
+macos/Pods/
+macos/Runner.xcworkspace/
+macos/Runner/GeneratedPluginRegistrant.*
+macos/Flutter/Flutter.framework
+macos/Flutter/App.framework
