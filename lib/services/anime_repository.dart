@@ -1,9 +1,11 @@
+// lib/services/anime_repository.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/anime.dart';
 
 class AnimeRepository {
-  final CollectionReference _animeCollection =
-      FirebaseFirestore.instance.collection('anime');
+  final CollectionReference _animeCollection = FirebaseFirestore.instance
+      .collection('anime');
 
   // Add
   Future<void> addAnime(Anime anime) async {
@@ -12,8 +14,13 @@ class AnimeRepository {
 
   // Stream
   Stream<List<Anime>> getAnimeStream() {
-    return _animeCollection.snapshots().map((snapshot) =>
-        snapshot.docs.map((doc) => Anime.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList());
+    return _animeCollection.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map(
+            (doc) => Anime.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          )
+          .toList(),
+    );
   }
 
   // Update

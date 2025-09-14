@@ -12,13 +12,9 @@ import 'models/anime.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(
-    const ProviderScope(child: MyApp()),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -64,7 +60,8 @@ class AnimeHomePage extends ConsumerWidget {
       ),
       body: animesAsync.when(
         data: (animes) {
-          if (animes.isEmpty) return const Center(child: Text('ไม่พบรายการ Anime'));
+          if (animes.isEmpty)
+            return const Center(child: Text('ไม่พบรายการ Anime'));
 
           return ListView.builder(
             itemCount: animes.length,
@@ -73,7 +70,9 @@ class AnimeHomePage extends ConsumerWidget {
               return Card(
                 elevation: 2,
                 margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: ListTile(
                   leading: anime.imageUrl.isNotEmpty
                       ? ClipRRect(
@@ -88,11 +87,28 @@ class AnimeHomePage extends ConsumerWidget {
                           ),
                         )
                       : CircleAvatar(
-                          child: Text(anime.title.isNotEmpty ? anime.title[0].toUpperCase() : '?'),
+                          child: Text(
+                            anime.title.isNotEmpty
+                                ? anime.title[0].toUpperCase()
+                                : '?',
+                          ),
                         ),
                   title: Text(anime.title),
-                  subtitle: Text(
-                      'ตอนที่ ${anime.episode} • ซีซั่น ${anime.season} • ${anime.genre} • ⭐ ${anime.rating.toStringAsFixed(2)}'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ตอนที่ ${anime.episode} • ซีซั่น ${anime.season} • ${anime.genre}',
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.star, size: 16, color: Colors.amber),
+                          const SizedBox(width: 4),
+                          Text(anime.rating.toStringAsFixed(2)),
+                        ],
+                      ),
+                    ],
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -107,7 +123,9 @@ class AnimeHomePage extends ConsumerWidget {
                             context: context,
                             builder: (c) => AlertDialog(
                               title: const Text('ยืนยันการลบ'),
-                              content: Text('ต้องการลบ "${anime.title}" หรือไม่?'),
+                              content: Text(
+                                'ต้องการลบ "${anime.title}" หรือไม่?',
+                              ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.of(c).pop(false),
@@ -121,7 +139,9 @@ class AnimeHomePage extends ConsumerWidget {
                             ),
                           );
                           if (confirm == true) {
-                            await ref.read(animeControllerProvider.notifier).deleteAnime(anime.id);
+                            await ref
+                                .read(animeControllerProvider.notifier)
+                                .deleteAnime(anime);
                           }
                         },
                       ),

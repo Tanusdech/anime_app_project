@@ -1,20 +1,20 @@
 // lib/repositories/anime_repository.dart
 
 import 'dart:io';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../models/anime.dart';
 
 class AnimeRepository {
   final CollectionReference _animeCollection =
-      FirebaseFirestore.instance.collection('anime');
+      FirebaseFirestore.instance.collection('animes');
 
   // Cloudinary config
   final String cloudName = 'dkl67w9p3';
-  final String uploadPreset = 'anime_upload'; // preset ที่สร้างแบบ unsigned
+  final String uploadPreset = 'anime_upload'; // unsigned preset
   final String fallbackImageUrl =
-      'https://via.placeholder.com/150'; // รูป default ถ้า user ไม่เลือก
+      'https://via.placeholder.com/150'; // default image
 
   /// Upload file ไป Cloudinary
   Future<String> _uploadToCloudinary(File? file) async {
@@ -31,15 +31,22 @@ class AnimeRepository {
       final jsonRes = json.decode(resStr);
       return jsonRes['secure_url'] ?? fallbackImageUrl;
     } else {
-      return fallbackImageUrl; // fallback ถ้า upload ไม่สำเร็จ
+      return fallbackImageUrl;
     }
   }
 
-  /// Add Anime (รองรับ Cloudinary)
+  /// Helper: สร้าง documentId ป้องกันข้อมูลซ้ำ
+  String _generateDocId(Anime anime) {
+    return '${anime.title}_S${anime.season}_E${anime.episode}';
+  }
+
+  /// Add Anime (Cloudinary + custom docId)
   Future<void> addAnime(Anime anime, {File? imageFile}) async {
     final imageUrl = await _uploadToCloudinary(imageFile);
     final animeWithImage = anime.copyWith(imageUrl: imageUrl);
-    await _animeCollection.add(animeWithImage.toMap());
+
+    final docId = _generateDocId(animeWithImage);
+    await _animeCollection.doc(docId).set(animeWithImage.toMap());
   }
 
   /// Stream - ดึง Anime แบบเรียลไทม์
@@ -58,11 +65,14 @@ class AnimeRepository {
       imageUrl = await _uploadToCloudinary(imageFile);
     }
     final updatedAnime = anime.copyWith(imageUrl: imageUrl);
-    await _animeCollection.doc(anime.id).update(updatedAnime.toMap());
+
+    final docId = _generateDocId(updatedAnime);
+    await _animeCollection.doc(docId).update(updatedAnime.toMap());
   }
 
   /// Delete Anime
-  Future<void> deleteAnime(String id) async {
-    await _animeCollection.doc(id).delete();
+  Future<void> deleteAnime(Anime anime) async {
+    final docId = _generateDocId(anime);
+    await _animeCollection.doc(docId).delete();
   }
 }

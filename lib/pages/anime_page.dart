@@ -67,10 +67,13 @@ class _AnimePageState extends ConsumerState<AnimePage> {
     );
 
     try {
-      await ref.read(animeControllerProvider.notifier).addAnime(anime, imageFile: imageFile);
+      await ref
+          .read(animeControllerProvider.notifier)
+          .addAnime(anime, imageFile: imageFile);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('เพิ่มข้อมูลเรียบร้อย')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('เพิ่มข้อมูลเรียบร้อย')));
       _formKey.currentState!.reset();
       setState(() {
         _pickedImage = null;
@@ -78,8 +81,9 @@ class _AnimePageState extends ConsumerState<AnimePage> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('บันทึกไม่สำเร็จ: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('บันทึกไม่สำเร็จ: $e')));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -93,7 +97,9 @@ class _AnimePageState extends ConsumerState<AnimePage> {
           icon: Icon(
             _rating >= starValue
                 ? Icons.star
-                : (_rating > starValue - 1 ? Icons.star_half : Icons.star_border),
+                : (_rating > starValue - 1
+                      ? Icons.star_half
+                      : Icons.star_border),
             color: Colors.amber,
           ),
           onPressed: () => setState(() => _rating = starValue.toDouble()),
@@ -119,21 +125,22 @@ class _AnimePageState extends ConsumerState<AnimePage> {
               key: _formKey,
               child: Column(
                 children: [
-                  // ชื่อเรื่อง
                   TextFormField(
                     controller: _titleController,
                     decoration: const InputDecoration(labelText: 'ชื่อเรื่อง'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'กรุณากรอกชื่อเรื่อง' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'กรุณากรอกชื่อเรื่อง'
+                        : null,
                   ),
                   const SizedBox(height: 8),
-                  // Episode + Season
                   Row(
                     children: [
                       Expanded(
                         child: TextFormField(
                           controller: _episodeController,
-                          decoration: const InputDecoration(labelText: 'ตอนที่'),
+                          decoration: const InputDecoration(
+                            labelText: 'ตอนที่',
+                          ),
                           keyboardType: TextInputType.number,
                         ),
                       ),
@@ -141,33 +148,31 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                       Expanded(
                         child: TextFormField(
                           controller: _seasonController,
-                          decoration: const InputDecoration(labelText: 'ซีซั่น'),
+                          decoration: const InputDecoration(
+                            labelText: 'ซีซั่น',
+                          ),
                           keyboardType: TextInputType.number,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  // ปี
                   TextFormField(
                     controller: _yearController,
-                    decoration: const InputDecoration(labelText: 'ปี'),
+                    decoration: const InputDecoration(labelText: 'ปีที่ฉาย'),
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 8),
-                  // ประเภท
                   TextFormField(
                     controller: _genreController,
                     decoration: const InputDecoration(labelText: 'ประเภท'),
                   ),
                   const SizedBox(height: 8),
-                  // คำอธิบาย
                   TextFormField(
                     controller: _descriptionController,
                     decoration: const InputDecoration(labelText: 'คำอธิบาย'),
                   ),
                   const SizedBox(height: 8),
-                  // ปุ่มเลือกรูป
                   Row(
                     children: [
                       ElevatedButton(
@@ -185,36 +190,47 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  // Rating
                   _buildStarRating(),
                   const SizedBox(height: 12),
-                  // ปุ่มบันทึก
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _isSubmitting ? null : _onAdd,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.secondary,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.secondary, // สีปุ่ม
+                        foregroundColor: Colors.white, // สีตัวอักษร
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: _isSubmitting
                           ? const SizedBox(
                               height: 18,
                               width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white, // สีวงกลมหมุน
+                              ),
                             )
-                          : const Text('บันทึก Anime', style: TextStyle(fontSize: 16)),
+                          : const Text(
+                              'บันทึก',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                // color: Colors.white, // ไม่จำเป็นเพราะ foregroundColor กำหนดแล้ว
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 12),
                 ],
               ),
             ),
-            // รายการ Anime
             Expanded(
               child: animesAsync.when(
                 data: (animes) {
-                  if (animes.isEmpty) return const Center(child: Text('ไม่มีรายการ Anime'));
+                  if (animes.isEmpty)
+                    return const Center(child: Text('ไม่มีรายการ Anime'));
                   return ListView.builder(
                     itemCount: animes.length,
                     itemBuilder: (context, i) {
@@ -240,12 +256,31 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                                 )
                               : CircleAvatar(
                                   child: Text(
-                                    a.title.isNotEmpty ? a.title[0].toUpperCase() : '?',
+                                    a.title.isNotEmpty
+                                        ? a.title[0].toUpperCase()
+                                        : '?',
                                   ),
                                 ),
                           title: Text(a.title),
-                          subtitle: Text(
-                              'ตอนที่ ${a.episode} • ซีซั่น ${a.season} • ${a.genre} • ⭐ ${a.rating.toStringAsFixed(2)}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ตอนที่ ${a.episode} • ซีซั่น ${a.season} • ${a.genre}',
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.star,
+                                    size: 16,
+                                    color: Colors.amber,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(a.rating.toStringAsFixed(2)),
+                                ],
+                              ),
+                            ],
+                          ),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete),
                             onPressed: () async {
@@ -253,21 +288,27 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                                 context: context,
                                 builder: (c) => AlertDialog(
                                   title: const Text('ยืนยันการลบ'),
-                                  content: Text('ต้องการลบ "${a.title}" หรือไม่?'),
+                                  content: Text(
+                                    'ต้องการลบ "${a.title}" หรือไม่?',
+                                  ),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(c).pop(false),
+                                      onPressed: () =>
+                                          Navigator.of(c).pop(false),
                                       child: const Text('ยกเลิก'),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.of(c).pop(true),
+                                      onPressed: () =>
+                                          Navigator.of(c).pop(true),
                                       child: const Text('ลบ'),
                                     ),
                                   ],
                                 ),
                               );
                               if (confirm == true) {
-                                await ref.read(animeControllerProvider.notifier).deleteAnime(a.id);
+                                await ref
+                                    .read(animeControllerProvider.notifier)
+                                    .deleteAnime(a);
                               }
                             },
                           ),

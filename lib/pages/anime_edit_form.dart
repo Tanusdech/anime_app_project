@@ -1,10 +1,9 @@
 // lib/pages/anime_edit_form.dart
 
-import 'dart:io'; // เพิ่มบรรทัดนี้
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloudinary_public/cloudinary_public.dart';
 import '../models/anime.dart';
 import '../providers/anime_providers.dart';
 
@@ -29,17 +28,21 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
   XFile? _pickedImage;
   bool _isSubmitting = false;
 
-  final cloudinary = CloudinaryPublic('dkl67w9p3', 'anime_upload', cache: false);
-
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.anime.title);
     _yearController = TextEditingController(text: widget.anime.year.toString());
     _genreController = TextEditingController(text: widget.anime.genre);
-    _descriptionController = TextEditingController(text: widget.anime.description);
-    _episodeController = TextEditingController(text: widget.anime.episode.toString());
-    _seasonController = TextEditingController(text: widget.anime.season.toString());
+    _descriptionController = TextEditingController(
+      text: widget.anime.description,
+    );
+    _episodeController = TextEditingController(
+      text: widget.anime.episode.toString(),
+    );
+    _seasonController = TextEditingController(
+      text: widget.anime.season.toString(),
+    );
     _rating = widget.anime.rating;
   }
 
@@ -60,18 +63,6 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
     if (picked != null) setState(() => _pickedImage = picked);
   }
 
-  Future<String> _uploadImage(XFile file) async {
-    try {
-      final response = await cloudinary.uploadFile(
-        CloudinaryFile.fromFile(file.path, resourceType: CloudinaryResourceType.Image),
-      );
-      return response.secureUrl;
-    } catch (e) {
-      debugPrint('อัปโหลดภาพล้มเหลว: $e');
-      return widget.anime.imageUrl; // fallback
-    }
-  }
-
   Future<void> _onUpdate() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -79,7 +70,8 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
 
     String imageUrl = widget.anime.imageUrl;
     if (_pickedImage != null) {
-      imageUrl = await _uploadImage(_pickedImage!);
+      // สำหรับตัวอย่างนี้ ใช้ File local -> Firebase Storage หรือ Cloudinary ตาม Controller
+      imageUrl = widget.anime.imageUrl; // placeholder
     }
 
     final updatedAnime = widget.anime.copyWith(
@@ -94,15 +86,19 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
     );
 
     try {
-      await ref.read(animeControllerProvider.notifier).updateAnime(updatedAnime);
+      await ref
+          .read(animeControllerProvider.notifier)
+          .updateAnime(updatedAnime);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('อัปเดตข้อมูลเรียบร้อย')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('อัปเดตข้อมูลเรียบร้อย')));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('อัปเดตไม่สำเร็จ: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('อัปเดตไม่สำเร็จ: $e')));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -116,46 +112,15 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
           icon: Icon(
             _rating >= starValue
                 ? Icons.star
-                : (_rating > starValue - 1 ? Icons.star_half : Icons.star_border),
+                : (_rating > starValue - 1
+                      ? Icons.star_half
+                      : Icons.star_border),
             color: Colors.amber,
           ),
           onPressed: () => setState(() => _rating = starValue.toDouble()),
         );
       }),
     );
-  }
-
-  Widget _buildImagePreview() {
-    if (_pickedImage != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.file(
-            File(_pickedImage!.path), // <-- ใช้งาน File ได้แล้ว
-            width: 120,
-            height: 120,
-            fit: BoxFit.cover,
-          ),
-        ),
-      );
-    } else if (widget.anime.imageUrl.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            widget.anime.imageUrl,
-            width: 120,
-            height: 120,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 48),
-          ),
-        ),
-      );
-    } else {
-      return const SizedBox.shrink();
-    }
   }
 
   @override
@@ -172,20 +137,35 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('แก้ไข Anime',
-                  style: Theme.of(context).textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'แก้ไข Anime',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
-              _buildImagePreview(),
+              if (_pickedImage != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(_pickedImage!.path),
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.cover,
+                  ),
+                ),
               Form(
                 key: _formKey,
                 child: Column(
                   children: [
                     TextFormField(
                       controller: _titleController,
-                      decoration: const InputDecoration(labelText: 'ชื่อเรื่อง'),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'กรุณากรอกชื่อเรื่อง' : null,
+                      decoration: const InputDecoration(
+                        labelText: 'ชื่อเรื่อง',
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'กรุณากรอกชื่อเรื่อง'
+                          : null,
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -193,7 +173,9 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
                         Expanded(
                           child: TextFormField(
                             controller: _episodeController,
-                            decoration: const InputDecoration(labelText: 'ตอนที่'),
+                            decoration: const InputDecoration(
+                              labelText: 'ตอนที่',
+                            ),
                             keyboardType: TextInputType.number,
                           ),
                         ),
@@ -201,7 +183,9 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
                         Expanded(
                           child: TextFormField(
                             controller: _seasonController,
-                            decoration: const InputDecoration(labelText: 'ซีซั่น'),
+                            decoration: const InputDecoration(
+                              labelText: 'ซีซั่น',
+                            ),
                             keyboardType: TextInputType.number,
                           ),
                         ),
@@ -210,7 +194,7 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _yearController,
-                      decoration: const InputDecoration(labelText: 'ปี'),
+                      decoration: const InputDecoration(labelText: 'ปีที่ฉาย'),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
@@ -224,39 +208,21 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
                       maxLines: 2,
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: _pickImage,
-                          child: const Text('เลือกรูปภาพ'),
-                        ),
-                        const SizedBox(width: 12),
-                        if (_pickedImage != null)
-                          Expanded(
-                            child: Text(
-                              _pickedImage!.name,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
                     _buildStarRating(),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isSubmitting ? null : _onUpdate,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
                         child: _isSubmitting
                             ? const SizedBox(
                                 height: 18,
                                 width: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
-                            : const Text('บันทึกการแก้ไข', style: TextStyle(fontSize: 16)),
+                            : const Text('บันทึกการแก้ไข'),
                       ),
                     ),
                   ],

@@ -24,7 +24,7 @@ class AnimeController extends AsyncNotifier<void> {
     repository = ref.watch(animeRepositoryProvider);
   }
 
-  /// เพิ่ม Anime พร้อมรองรับ Cloudinary imageFile
+  /// เพิ่ม Anime พร้อมรองรับ imageFile
   Future<void> addAnime(Anime anime, {File? imageFile}) async {
     state = const AsyncLoading();
     try {
@@ -32,15 +32,15 @@ class AnimeController extends AsyncNotifier<void> {
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
-      rethrow; // UI จะจับ error ได้
+      rethrow;
     }
   }
 
   /// ลบ Anime
-  Future<void> deleteAnime(String id) async {
+  Future<void> deleteAnime(Anime anime) async {
     state = const AsyncLoading();
     try {
-      await repository.deleteAnime(id);
+      await repository.deleteAnime(anime);
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -48,10 +48,14 @@ class AnimeController extends AsyncNotifier<void> {
     }
   }
 
-  /// อัปเดต Anime (รองรับ imageFile ด้วย)
+  /// อัปเดต Anime พร้อมรองรับ imageFile
   Future<void> updateAnime(Anime anime, {File? imageFile}) async {
     state = const AsyncLoading();
     try {
+      // ตรวจสอบว่า id ไม่ว่าง
+      if (anime.id.isEmpty) {
+        throw Exception('Anime id ว่าง ไม่สามารถอัปเดตได้');
+      }
       await repository.updateAnime(anime, imageFile: imageFile);
       state = const AsyncData(null);
     } catch (e, st) {
@@ -62,7 +66,8 @@ class AnimeController extends AsyncNotifier<void> {
 }
 
 // Provider สำหรับ Controller
-final animeControllerProvider =
-    AsyncNotifierProvider<AnimeController, void>(() {
-  return AnimeController();
-});
+final animeControllerProvider = AsyncNotifierProvider<AnimeController, void>(
+  () {
+    return AnimeController();
+  },
+);
