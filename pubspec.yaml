@@ -30,6 +30,9 @@ dependencies:
   cloudinary_public: ^0.23.1
   image_picker: ^0.8.7+4
 
+  # Crypto สำหรับ SHA1 signature Cloudinary
+  crypto: ^3.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

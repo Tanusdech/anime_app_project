@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart';
 import '../models/anime.dart';
 
 class AnimeRepository {
@@ -12,9 +13,10 @@ class AnimeRepository {
 
   // Cloudinary config
   final String cloudName = 'dkl67w9p3';
-  final String uploadPreset = 'anime_upload'; // unsigned preset
-  final String fallbackImageUrl =
-      'https://via.placeholder.com/150'; // default image
+  final String uploadPreset = 'anime_upload';
+  final String apiKey = '819521121367424';
+  final String apiSecret = 'B85Tpz2_jlApzGIociMztXoaa3k';
+  final String fallbackImageUrl = 'https://via.placeholder.com/150';
 
   /// Upload file ไป Cloudinary
   Future<String> _uploadToCloudinary(File? file) async {
@@ -42,6 +44,48 @@ class AnimeRepository {
     } catch (e) {
       print('Cloudinary upload error: $e');
       return fallbackImageUrl;
+    }
+  }
+
+  /// ลบรูปจาก Cloudinary ด้วย public_id
+  Future<void> _deleteFromCloudinary(String imageUrl) async {
+    try {
+      if (imageUrl.isEmpty || imageUrl == fallbackImageUrl) return;
+
+      // ดึง public_id จาก URL
+      final uri = Uri.parse(imageUrl);
+      final segments = uri.pathSegments;
+      if (segments.isEmpty) return;
+
+      final fileNameWithExt = segments.last;
+      final publicId = fileNameWithExt.split('.').first;
+
+      final timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000)
+          .toString();
+
+      // สร้าง signature ตาม Cloudinary API
+      final signatureString =
+          'public_id=$publicId&timestamp=$timestamp$apiSecret';
+      final signature = sha1.convert(utf8.encode(signatureString)).toString();
+
+      final deleteUrl = Uri.parse(
+        'https://api.cloudinary.com/v1_1/$cloudName/image/destroy',
+      );
+
+      final response = await http.post(
+        deleteUrl,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'public_id': publicId,
+          'api_key': apiKey,
+          'timestamp': timestamp,
+          'signature': signature,
+        },
+      );
+
+      print('Cloudinary delete response: ${response.body}');
+    } catch (e) {
+      print('Cloudinary delete error: $e');
     }
   }
 
@@ -83,18 +127,15 @@ class AnimeRepository {
   Future<void> updateAnime(
     Anime anime, {
     File? imageFile,
-    String? previousDocId, // ✅ รับค่า docId เก่า
+    String? previousDocId,
   }) async {
     print('Repository: updateAnime called for ${anime.title}');
 
-    // ID เดิม
     final oldDocId =
         previousDocId ??
         (anime.id.isNotEmpty ? anime.id : generateDocumentId(anime));
-    // ID ใหม่
     final newDocId = generateDocumentId(anime);
 
-    // --- ดึงค่า imageUrl เดิมจาก Firestore ถ้า anime.imageUrl ไม่มีค่า ---
     String imageUrl = anime.imageUrl;
     if ((imageUrl.isEmpty || imageUrl == fallbackImageUrl) &&
         oldDocId.isNotEmpty) {
@@ -106,7 +147,6 @@ class AnimeRepository {
       }
     }
 
-    // ถ้ามีการอัปโหลดไฟล์ใหม่ → อัปเดตแทน
     if (imageFile != null) {
       imageUrl = await _uploadToCloudinary(imageFile);
     }
@@ -115,13 +155,11 @@ class AnimeRepository {
     final updatedAnimeWithId = updatedAnime.copyWith(id: newDocId);
 
     if (oldDocId != newDocId) {
-      // Document ID เปลี่ยน → สร้างใหม่แล้วลบเก่า
       print('Document ID changed: $oldDocId → $newDocId');
       await _animeCollection.doc(newDocId).set(updatedAnimeWithId.toMap());
       await _animeCollection.doc(oldDocId).delete();
       print('Updated anime with new docId and deleted old doc');
     } else {
-      // ID เดิม → อัปเดตปกติ
       await _animeCollection
           .doc(oldDocId)
           .set(updatedAnimeWithId.toMap(), SetOptions(merge: true));
@@ -129,11 +167,26 @@ class AnimeRepository {
     }
   }
 
-  /// Delete Anime
+  /// Delete Anime + ลบรูปจาก Cloudinary
   Future<void> deleteAnime(Anime anime) async {
     final docId = anime.id.isNotEmpty ? anime.id : generateDocumentId(anime);
     print('Deleting anime: ${anime.title}, docId: $docId');
 
+    // ดึง imageUrl ก่อนลบ Document
+    String imageUrl = anime.imageUrl;
+    if ((imageUrl.isEmpty || imageUrl == fallbackImageUrl) &&
+        docId.isNotEmpty) {
+      final doc = await _animeCollection.doc(docId).get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        imageUrl = data['imageUrl'] ?? fallbackImageUrl;
+      }
+    }
+
+    // ลบรูปจาก Cloudinary
+    await _deleteFromCloudinary(imageUrl);
+
+    // ลบ Document Firestore
     await _animeCollection.doc(docId).delete();
     print('Anime deleted successfully');
   }
