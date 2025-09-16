@@ -7,8 +7,8 @@ import 'package:http/http.dart' as http;
 import '../models/anime.dart';
 
 class AnimeRepository {
-  final CollectionReference _animeCollection =
-      FirebaseFirestore.instance.collection('animes');
+  final CollectionReference _animeCollection = FirebaseFirestore.instance
+      .collection('animes');
 
   // Cloudinary config
   final String cloudName = 'dkl67w9p3';
@@ -20,33 +20,54 @@ class AnimeRepository {
   Future<String> _uploadToCloudinary(File? file) async {
     if (file == null) return fallbackImageUrl;
 
-    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
-    final request = http.MultipartRequest('POST', url);
-    request.fields['upload_preset'] = uploadPreset;
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+    try {
+      final url = Uri.parse(
+        'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
+      );
+      final request = http.MultipartRequest('POST', url);
+      request.fields['upload_preset'] = uploadPreset;
+      request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
-    final response = await request.send();
-    if (response.statusCode == 200) {
+      final response = await request.send();
       final resStr = await response.stream.bytesToString();
-      final jsonRes = json.decode(resStr);
-      return jsonRes['secure_url'] ?? fallbackImageUrl;
-    } else {
+      print('Cloudinary response: $resStr');
+
+      if (response.statusCode == 200) {
+        final jsonRes = json.decode(resStr);
+        return jsonRes['secure_url'] ?? fallbackImageUrl;
+      } else {
+        print('Cloudinary upload failed: ${response.statusCode}');
+        return fallbackImageUrl;
+      }
+    } catch (e) {
+      print('Cloudinary upload error: $e');
       return fallbackImageUrl;
     }
   }
 
-  /// Helper: สร้าง documentId ป้องกันข้อมูลซ้ำ
-  String _generateDocId(Anime anime) {
-    return '${anime.title}_S${anime.season}_E${anime.episode}';
+  /// สร้าง documentId จาก title + season + episode
+  String generateDocumentId(Anime anime) {
+    final safeTitle = anime.title.isNotEmpty ? anime.title : 'Untitled';
+    final safeSeason = anime.season > 0 ? anime.season : 1;
+    final safeEpisode = anime.episode > 0 ? anime.episode : 1;
+    return '${safeTitle}_S${safeSeason}_E${safeEpisode}';
   }
 
   /// Add Anime (Cloudinary + custom docId)
   Future<void> addAnime(Anime anime, {File? imageFile}) async {
+    print('Repository: addAnime called');
     final imageUrl = await _uploadToCloudinary(imageFile);
     final animeWithImage = anime.copyWith(imageUrl: imageUrl);
 
-    final docId = _generateDocId(animeWithImage);
-    await _animeCollection.doc(docId).set(animeWithImage.toMap());
+    final docId = generateDocumentId(animeWithImage);
+    final animeWithId = animeWithImage.copyWith(id: docId);
+
+    print(
+      'Adding anime: ${animeWithId.title}, docId: $docId, imageUrl: $imageUrl',
+    );
+
+    await _animeCollection.doc(docId).set(animeWithId.toMap());
+    print('Anime added to Firestore successfully');
   }
 
   /// Stream - ดึง Anime แบบเรียลไทม์
@@ -58,21 +79,62 @@ class AnimeRepository {
     });
   }
 
-  /// Update Anime
-  Future<void> updateAnime(Anime anime, {File? imageFile}) async {
+  /// Update Anime (รองรับสร้าง Document ใหม่ + ลบ Document เก่า)
+  Future<void> updateAnime(
+    Anime anime, {
+    File? imageFile,
+    String? previousDocId, // ✅ รับค่า docId เก่า
+  }) async {
+    print('Repository: updateAnime called for ${anime.title}');
+
+    // ID เดิม
+    final oldDocId =
+        previousDocId ??
+        (anime.id.isNotEmpty ? anime.id : generateDocumentId(anime));
+    // ID ใหม่
+    final newDocId = generateDocumentId(anime);
+
+    // --- ดึงค่า imageUrl เดิมจาก Firestore ถ้า anime.imageUrl ไม่มีค่า ---
     String imageUrl = anime.imageUrl;
+    if ((imageUrl.isEmpty || imageUrl == fallbackImageUrl) &&
+        oldDocId.isNotEmpty) {
+      final oldDoc = await _animeCollection.doc(oldDocId).get();
+      if (oldDoc.exists) {
+        final data = oldDoc.data() as Map<String, dynamic>;
+        imageUrl = data['imageUrl'] ?? fallbackImageUrl;
+        print('Fetched old imageUrl from Firestore: $imageUrl');
+      }
+    }
+
+    // ถ้ามีการอัปโหลดไฟล์ใหม่ → อัปเดตแทน
     if (imageFile != null) {
       imageUrl = await _uploadToCloudinary(imageFile);
     }
-    final updatedAnime = anime.copyWith(imageUrl: imageUrl);
 
-    final docId = _generateDocId(updatedAnime);
-    await _animeCollection.doc(docId).update(updatedAnime.toMap());
+    final updatedAnime = anime.copyWith(imageUrl: imageUrl);
+    final updatedAnimeWithId = updatedAnime.copyWith(id: newDocId);
+
+    if (oldDocId != newDocId) {
+      // Document ID เปลี่ยน → สร้างใหม่แล้วลบเก่า
+      print('Document ID changed: $oldDocId → $newDocId');
+      await _animeCollection.doc(newDocId).set(updatedAnimeWithId.toMap());
+      await _animeCollection.doc(oldDocId).delete();
+      print('Updated anime with new docId and deleted old doc');
+    } else {
+      // ID เดิม → อัปเดตปกติ
+      await _animeCollection
+          .doc(oldDocId)
+          .set(updatedAnimeWithId.toMap(), SetOptions(merge: true));
+      print('Updated anime with existing docId');
+    }
   }
 
   /// Delete Anime
   Future<void> deleteAnime(Anime anime) async {
-    final docId = _generateDocId(anime);
+    final docId = anime.id.isNotEmpty ? anime.id : generateDocumentId(anime);
+    print('Deleting anime: ${anime.title}, docId: $docId');
+
     await _animeCollection.doc(docId).delete();
+    print('Anime deleted successfully');
   }
 }

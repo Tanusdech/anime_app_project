@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/anime.dart';
 import '../providers/anime_providers.dart';
+import 'anime_edit_form.dart';
 
 class AnimePage extends ConsumerStatefulWidget {
   const AnimePage({Key? key}) : super(key: key);
@@ -56,14 +57,16 @@ class _AnimePageState extends ConsumerState<AnimePage> {
 
     final anime = Anime(
       id: '',
-      title: _titleController.text.trim(),
+      title: _titleController.text.trim().isNotEmpty
+          ? _titleController.text.trim()
+          : 'Untitled',
+      episode: int.tryParse(_episodeController.text.trim()) ?? 1,
+      season: int.tryParse(_seasonController.text.trim()) ?? 1,
+      rating: double.parse(_rating.toStringAsFixed(2)),
       year: _yearController.text.trim(),
       genre: _genreController.text.trim(),
       description: _descriptionController.text.trim(),
-      episode: int.tryParse(_episodeController.text.trim()) ?? 0,
-      season: int.tryParse(_seasonController.text.trim()) ?? 0,
-      imageUrl: '', // จะถูกแทนด้วย Cloudinary URL ใน repository
-      rating: double.parse(_rating.toStringAsFixed(2)),
+      imageUrl: '', // จะถูกแทนด้วย Cloudinary URL
     );
 
     try {
@@ -108,6 +111,14 @@ class _AnimePageState extends ConsumerState<AnimePage> {
     );
   }
 
+  void _openEditForm(Anime anime) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => AnimeEditForm(anime: anime),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final animesAsync = ref.watch(animeListProvider);
@@ -121,6 +132,7 @@ class _AnimePageState extends ConsumerState<AnimePage> {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
+            // Form สำหรับเพิ่ม Anime
             Form(
               key: _formKey,
               child: Column(
@@ -199,8 +211,8 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(
                           context,
-                        ).colorScheme.secondary, // สีปุ่ม
-                        foregroundColor: Colors.white, // สีตัวอักษร
+                        ).colorScheme.secondary,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: _isSubmitting
@@ -209,7 +221,7 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                               width: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white, // สีวงกลมหมุน
+                                color: Colors.white,
                               ),
                             )
                           : const Text(
@@ -217,7 +229,6 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                // color: Colors.white, // ไม่จำเป็นเพราะ foregroundColor กำหนดแล้ว
                               ),
                             ),
                     ),
@@ -226,11 +237,14 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                 ],
               ),
             ),
+
+            // List แสดง Anime
             Expanded(
               child: animesAsync.when(
                 data: (animes) {
-                  if (animes.isEmpty)
+                  if (animes.isEmpty) {
                     return const Center(child: Text('ไม่มีรายการ Anime'));
+                  }
                   return ListView.builder(
                     itemCount: animes.length,
                     itemBuilder: (context, i) {
@@ -242,6 +256,7 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: ListTile(
+                          // ใช้ leading แค่ครั้งเดียว
                           leading: a.imageUrl.isNotEmpty
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(6),
@@ -281,36 +296,46 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                               ),
                             ],
                           ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (c) => AlertDialog(
-                                  title: const Text('ยืนยันการลบ'),
-                                  content: Text(
-                                    'ต้องการลบ "${a.title}" หรือไม่?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(c).pop(false),
-                                      child: const Text('ยกเลิก'),
+                          // ปุ่มแก้ไข + ลบ ย้ายไป trailing
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => _openEditForm(a),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (c) => AlertDialog(
+                                      title: const Text('ยืนยันการลบ'),
+                                      content: Text(
+                                        'ต้องการลบ "${a.title}" หรือไม่?',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(c).pop(false),
+                                          child: const Text('ยกเลิก'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(c).pop(true),
+                                          child: const Text('ลบ'),
+                                        ),
+                                      ],
                                     ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(c).pop(true),
-                                      child: const Text('ลบ'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                await ref
-                                    .read(animeControllerProvider.notifier)
-                                    .deleteAnime(a);
-                              }
-                            },
+                                  );
+                                  if (confirm == true) {
+                                    await ref
+                                        .read(animeControllerProvider.notifier)
+                                        .deleteAnime(a);
+                                  }
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       );
