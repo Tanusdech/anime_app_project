@@ -40,7 +40,7 @@ class AnimeController extends AsyncNotifier<void> {
   Future<void> updateAnime(
     Anime anime, {
     File? imageFile,
-    String? previousDocId, // ✅ รับค่า previousDocId
+    String? previousDocId,
   }) async {
     state = const AsyncLoading();
     try {
@@ -54,7 +54,7 @@ class AnimeController extends AsyncNotifier<void> {
       await repository.updateAnime(
         anime,
         imageFile: imageFile,
-        previousDocId: previousDocId, // ✅ ส่งต่อไป repository
+        previousDocId: previousDocId,
       );
 
       print('Controller: updateAnime completed successfully');

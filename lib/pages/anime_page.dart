@@ -66,7 +66,7 @@ class _AnimePageState extends ConsumerState<AnimePage> {
       year: _yearController.text.trim(),
       genre: _genreController.text.trim(),
       description: _descriptionController.text.trim(),
-      imageUrl: '', // จะถูกแทนด้วย Cloudinary URL
+      imageUrl: '',
     );
 
     try {
@@ -256,7 +256,6 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: ListTile(
-                          // ใช้ leading แค่ครั้งเดียว
                           leading: a.imageUrl.isNotEmpty
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(6),
@@ -296,7 +295,6 @@ class _AnimePageState extends ConsumerState<AnimePage> {
                               ),
                             ],
                           ),
-                          // ปุ่มแก้ไข + ลบ ย้ายไป trailing
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

@@ -89,7 +89,7 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
       await ref.read(animeControllerProvider.notifier).updateAnime(
             updatedAnime.copyWith(id: newDocId),
             imageFile: imageFile,
-            previousDocId: oldDocId, // ✅ ส่ง previousDocId ไปด้วย
+            previousDocId: oldDocId,
           );
 
       if (!mounted) return;

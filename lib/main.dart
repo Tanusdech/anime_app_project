@@ -8,6 +8,7 @@ import 'firebase_options.dart';
 import 'providers/anime_providers.dart';
 import 'pages/anime_page.dart';
 import 'pages/anime_edit_form.dart';
+import 'pages/splash_screen.dart';
 import 'models/anime.dart';
 
 void main() async {
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const AnimeHomePage(),
+      home: const SplashScreen(),
     );
   }
 }
