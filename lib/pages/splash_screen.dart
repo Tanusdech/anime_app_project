@@ -1,8 +1,9 @@
 // lib/pages/splash_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import 'package:lottie/lottie.dart';
-import '../main.dart';
+import '../main.dart'; // เรียก AnimeHomePage
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,17 +13,47 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+    with TickerProviderStateMixin {
+  late VideoPlayerController _videoController;
+  late AnimationController _lottieController;
+  bool _showLottie = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this);
 
-    // เพิ่ม Listener ให้ตรวจสอบเมื่อ animation จบ
-    _controller.addStatusListener((status) {
+    // 1️⃣ ตั้งค่า Video Player
+    _videoController =
+        VideoPlayerController.asset(
+            'assets/videos/Illuminated_Circles_Intro_free.mp4',
+          )
+          ..initialize().then((_) {
+            setState(() {});
+            _videoController.play();
+          });
+
+    // ตรวจสอบเมื่อวิดีโอเล่นจบ
+    _videoController.addListener(() {
+      if (_videoController.value.isInitialized &&
+          !_showLottie &&
+          _videoController.value.position >= _videoController.value.duration) {
+        // วิดีโอจบ → แสดง Lottie
+        setState(() {
+          _showLottie = true;
+        });
+        _videoController.pause();
+        _videoController.dispose();
+
+        _playLottieAnimation();
+      }
+    });
+  }
+
+  void _playLottieAnimation() {
+    _lottieController = AnimationController(vsync: this);
+    _lottieController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
+        // Lottie จบ → ไปหน้า Home
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const AnimeHomePage()),
@@ -34,26 +65,36 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (!_showLottie) {
+      _videoController.dispose();
+    }
+    _lottieController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black, // พื้นหลังดำ
       body: Center(
-        child: Lottie.asset(
-          'assets/lottie/CamelCase.json',
-          controller: _controller,
-          width: 200,
-          height: 200,
-          fit: BoxFit.contain,
-          onLoaded: (composition) {
-            // ตั้งเวลา duration ของ controller ตาม animation
-            _controller.duration = composition.duration;
-            _controller.forward(); // เริ่มเล่น animation
-          },
-        ),
+        child: _showLottie
+            ? Lottie.asset(
+                'assets/lottie/CamelCase.json',
+                controller: _lottieController,
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
+                onLoaded: (composition) {
+                  _lottieController.duration = composition.duration;
+                  _lottieController.forward();
+                },
+              )
+            : (_videoController.value.isInitialized
+                  ? AspectRatio(
+                      aspectRatio: _videoController.value.aspectRatio,
+                      child: VideoPlayer(_videoController),
+                    )
+                  : const SizedBox.shrink()),
       ),
     );
   }
