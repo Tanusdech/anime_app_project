@@ -4,7 +4,6 @@
     <!-- พื้นหลังดำเต็มจอ -->
     <item android:drawable="@android:color/black" />
 
-    <!-- โลโก้คุณเต็มกลางจอ -->
     <item>
         <bitmap
             android:gravity="center"

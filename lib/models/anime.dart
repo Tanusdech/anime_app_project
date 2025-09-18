@@ -1,12 +1,12 @@
 // lib/models/anime.dart
 
 class Anime {
-  final String id; // Firestore docId
+  final String id;
   final String title;
-  final int episode; // ตอนที่
-  final int season; // ซีซั่น
-  final double rating; // คะแนน 0.0 - 5.0, ทศนิยม 2 ตำแหน่ง
-  final String year; // ปีที่ออกฉาย
+  final int episode;
+  final int season;
+  final double rating;
+  final String year;
   final String description;
   final String genre;
   final String imageUrl;

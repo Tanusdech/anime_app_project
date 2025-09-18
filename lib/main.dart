@@ -10,6 +10,7 @@ import 'pages/anime_page.dart';
 import 'pages/anime_edit_form.dart';
 import 'pages/splash_screen.dart';
 import 'models/anime.dart';
+import 'package:lottie/lottie.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,9 +62,16 @@ class AnimeHomePage extends ConsumerWidget {
       ),
       body: animesAsync.when(
         data: (animes) {
-          if (animes.isEmpty)
-            return const Center(child: Text('ไม่พบรายการ Anime'));
-
+          if (animes.isEmpty) {
+            return Center(
+              child: Lottie.asset(
+                'assets/lottie/No_Data_Animation.json',
+                width: 300,
+                height: 300,
+                fit: BoxFit.contain,
+              ),
+            );
+          }
           return ListView.builder(
             itemCount: animes.length,
             itemBuilder: (context, index) {

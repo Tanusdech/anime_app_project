@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:lottie/lottie.dart';
-import '../main.dart'; // เรียก AnimeHomePage
+import '../main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -75,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // พื้นหลังดำ
+      backgroundColor: Colors.black,
       body: Center(
         child: _showLottie
             ? Lottie.asset(

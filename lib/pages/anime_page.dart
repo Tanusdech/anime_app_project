@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/anime.dart';
 import '../providers/anime_providers.dart';
 import 'anime_edit_form.dart';
+import 'package:lottie/lottie.dart';
 
 class AnimePage extends ConsumerStatefulWidget {
   const AnimePage({Key? key}) : super(key: key);
@@ -243,7 +244,14 @@ class _AnimePageState extends ConsumerState<AnimePage> {
               child: animesAsync.when(
                 data: (animes) {
                   if (animes.isEmpty) {
-                    return const Center(child: Text('ไม่มีรายการ Anime'));
+                    return Center(
+                      child: Lottie.asset(
+                        'assets/lottie/No_Data_Animation.json',
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.contain,
+                      ),
+                    );
                   }
                   return ListView.builder(
                     itemCount: animes.length,
