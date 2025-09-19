@@ -163,9 +163,42 @@ class _AnimePageState extends ConsumerState<AnimePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('เพิ่ม Anime'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: Row(
+          children: [
+            const Icon(Icons.add_circle_outline, color: Colors.white, size: 26),
+            const SizedBox(width: 8),
+            Text(
+              'Add Anime',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+        centerTitle: false,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.pinkAccent, Colors.deepPurple],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.save, color: Colors.white),
+        //     onPressed: () {
+        //       // TODO: ปุ่มนี้เพื่อบันทึก anime ใหม่ (ทางเลือก)
+        //     },
+        //   ),
+        // ],
+        elevation: 4,
+        shadowColor: Colors.black45,
       ),
+
       body: Stack(
         children: [
           Padding(

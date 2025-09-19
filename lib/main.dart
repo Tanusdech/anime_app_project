@@ -56,10 +56,53 @@ class AnimeHomePage extends ConsumerWidget {
     }
 
     return Scaffold(
+      // appBar: AppBar(
+      //   backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      //   title: const Text('Anime App Home'),
+      // ),
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Anime App Home'),
+        title: Row(
+          children: [
+            const Icon(Icons.movie, color: Colors.white, size: 28),
+            const SizedBox(width: 8),
+            Text(
+              'Anime App',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: () {
+              // TODO: ฟังก์ชันค้นหา
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            onPressed: () {
+              // TODO: ฟังก์ชันตั้งค่า
+            },
+          ),
+        ],
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.deepPurple, Colors.pinkAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        elevation: 4,
+        shadowColor: Colors.black45,
       ),
+
       body: animesAsync.when(
         data: (animes) {
           if (animes.isEmpty) {

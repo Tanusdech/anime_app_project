@@ -151,35 +151,56 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'แก้ไข Anime',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.edit,
+                        color: Colors.deepPurple,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Edit Anime',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          color: Colors.deepPurple,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  if (_pickedImage != null)
+                  const SizedBox(height: 16),
+
+                  if (_pickedImage != null ||
+                      widget.anime.imageUrl.isNotEmpty) ...[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(_pickedImage!.path),
-                        width: 120,
-                        height: 120,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  else if (widget.anime.imageUrl.isNotEmpty)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        widget.anime.imageUrl,
-                        width: 120,
-                        height: 120,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.image_not_supported, size: 48),
-                      ),
+                      child: _pickedImage != null
+                          ? Image.file(
+                              File(_pickedImage!.path),
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.network(
+                              widget.anime.imageUrl,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.image_not_supported,
+                                size: 48,
+                              ),
+                            ),
                     ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: _pickImage,
+                      child: const Text('เลือกภาพ'),
+                    ),
+                  ],
                   Form(
                     key: _formKey,
                     child: Column(
