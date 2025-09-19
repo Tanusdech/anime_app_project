@@ -47,4 +47,5 @@ flutter:
     - assets/images/anime_project.png
     - assets/lottie/CamelCase.json
     - assets/lottie/No_Data_Animation.json
+    - assets/lottie/loading.json
     - assets/videos/Illuminated_Circles_Intro_free.mp4
