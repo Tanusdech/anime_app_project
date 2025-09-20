@@ -86,7 +86,7 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
       description: _descriptionController.text.trim(),
       episode: int.tryParse(_episodeController.text.trim()) ?? 0,
       season: int.tryParse(_seasonController.text.trim()) ?? 0,
-      rating: double.parse(_rating.toStringAsFixed(2)),
+      rating: double.parse(_rating.toStringAsFixed(1)),
     );
 
     final oldDocId = widget.anime.id;
@@ -116,22 +116,42 @@ class _AnimeEditFormState extends ConsumerState<AnimeEditForm> {
     }
   }
 
+  /// ปรับให้รองรับ step 0.5 (ครึ่งดาว)
   Widget _buildStarRating() {
-    return Row(
-      children: List.generate(5, (index) {
-        final starValue = index + 1;
-        return IconButton(
-          icon: Icon(
-            _rating >= starValue
-                ? Icons.star
-                : (_rating > starValue - 1
-                      ? Icons.star_half
-                      : Icons.star_border),
-            color: Colors.amber,
-          ),
-          onPressed: () => setState(() => _rating = starValue.toDouble()),
-        );
-      }),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: List.generate(5, (index) {
+            final starValue = index + 1;
+            return Icon(
+              _rating >= starValue
+                  ? Icons.star
+                  : (_rating >= starValue - 0.5
+                        ? Icons.star_half
+                        : Icons.star_border),
+              color: Colors.amber,
+              size: 32,
+            );
+          }),
+        ),
+        Slider(
+          value: _rating,
+          min: 0,
+          max: 5,
+          divisions: 10,
+          label: _rating.toStringAsFixed(1),
+          onChanged: (value) {
+            setState(() {
+              _rating = double.parse(value.toStringAsFixed(1));
+            });
+          },
+        ),
+        Text(
+          'คะแนน: ${_rating.toStringAsFixed(1)}',
+          style: const TextStyle(fontSize: 14, color: Colors.black54),
+        ),
+      ],
     );
   }
 

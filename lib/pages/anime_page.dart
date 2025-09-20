@@ -92,21 +92,37 @@ class _AnimePageState extends ConsumerState<AnimePage> {
   }
 
   Widget _buildStarRating() {
-    return Row(
-      children: List.generate(5, (index) {
-        final starValue = index + 1;
-        return IconButton(
-          icon: Icon(
-            _rating >= starValue
-                ? Icons.star
-                : (_rating > starValue - 1
-                      ? Icons.star_half
-                      : Icons.star_border),
-            color: Colors.amber,
-          ),
-          onPressed: () => setState(() => _rating = starValue.toDouble()),
-        );
-      }),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: List.generate(5, (index) {
+            final starValue = index + 1;
+            return Icon(
+              _rating >= starValue
+                  ? Icons.star
+                  : (_rating >= starValue - 0.5
+                        ? Icons.star_half
+                        : Icons.star_border),
+              color: Colors.amber,
+            );
+          }),
+        ),
+        Slider(
+          value: _rating,
+          min: 0,
+          max: 5,
+          divisions: 10,
+          label: _rating.toStringAsFixed(1),
+          onChanged: (value) {
+            setState(() {
+              _rating = double.parse(
+                value.toStringAsFixed(1),
+              );
+            });
+          },
+        ),
+      ],
     );
   }
 
